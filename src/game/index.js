@@ -3,11 +3,16 @@ var Phaser = require('phaser');
 var SCALE = 3;
 var ball;
 var bar;
-var ballSpeed = 200;
+var ballSpeed = 500;
 var barSpeed = 200;
 var cursor;
 var brick;
 var bricks;
+var text;
+var spaceKey;
+var score;
+var scoreCount = 0;
+var loose;
 
 var WIDTH = 224;
 var HEIGHT = 192;
@@ -45,15 +50,32 @@ function _preload() {
 
 function _create() {
   // console.log('✨ Create game');
+
+  score = game.add.text(WIDTH_SCALED / 2, HEIGHT_SCALED / 2, 'Score : 0', { font: "40px Trebuchet MS", fill: "#207a34" });
+  text = game.add.text(WIDTH_SCALED / 2, HEIGHT_SCALED / 2, 'Pause', { font: "100px Trebuchet MS", fill: "#000000" });
+  loose = game.add.text(WIDTH_SCALED / 2, HEIGHT_SCALED / 2, 'LOOSE !', { font: "100px Trebuchet MS", fill: "#9c033a" });
+  loose.visible = false;
+  loose.anchor.setTo(0.5);
+
+
+  game.physics.startSystem(Phaser.Physics.ARCADE);
+  game.physics.arcade.checkCollision.down = false;
+
+
   game.stage.backgroundColor = "#7fc379";
-  ball = game.add.sprite(100,100,"ball")
+  ball = game.add.sprite(WIDTH_SCALED / 2, HEIGHT_SCALED / 2, "ball")
+  ball.checkWorldBounds = true;
+  ball.events.onOutOfBounds.add(function(){
+    loose.visible = true;
+    game.paused = true;
+  }, this)
   bar = game.add.sprite(WIDTH_SCALED / 2, HEIGHT_SCALED - 40, "bar")
   ball.scale.set(SCALE);
   bar.scale.set(SCALE);
   game.physics.enable(ball, Phaser.Physics.ARCADE);
   game.physics.enable(bar, Phaser.Physics.ARCADE);
 
-  var angle = 90;
+  var angle = - 90;
   ball.body.velocity.setTo(
     Math.cos(angle) * ballSpeed,
     Math.sin(angle) * ballSpeed
@@ -65,7 +87,20 @@ function _create() {
   cursor = game.input.keyboard.createCursorKeys();
   bar.body.immovable = true;
 
-  _createBricks()
+  _createBricks();
+
+  score.visible = false;
+  text.anchor.setTo(0.5);
+  score.anchor.setTo(0.5);
+
+  game.paused = true;
+
+  spaceKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+  spaceKey.onDown.add(function() {
+    game.paused = !game.paused;
+    text.visible = ! text.visible;
+    score.visible = ! score.visible;
+  }, this);
 }
 
 function _createBricks(){
@@ -122,5 +157,7 @@ function _reflect(bar, ball){
 
 function _breakBrick(ball, brick) {
   brick.kill();
+  scoreCount++;
+  score.setText("Score : " + scoreCount)
   return true;
 }
